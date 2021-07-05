@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <h1 id="search">语音识别查电影</h1>
+  <ul>
+  </ul>
+  <script src="https://cdn.bootcdn.net/ajax/libs/zepto/1.0rc1/zepto.min.js"></script>
+  <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+  <script>
+    /*
+      // 1.绑定域名
+      //   - 在接口测试号绑定js接口安全域名
+      // 2.引入js文件
+      //   <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.6.0.js"><script>
+      // 3.通过config接口注入权限验证配置
+      */
+
+    wx.config({
+      debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+      appId: 'wxeb33a37fc55b2891', // 必填，公众号的唯一标识
+      timestamp: '<%= timestamp %>', // 必填，生成签名的时间戳
+      nonceStr: '<%= noncestr %>', // 必填，生成签名的随机串
+      signature: '<%= signature %>',// 必填，签名
+      jsApiList: ['onMenuShareWeibo', 'startRecord', 'stopRecord', 'translateVoice','updateTimelineShareData','updateAppMessageShareData'] // 必填，需要使用的JS接口列表
+    });
+    // 通过ready接口处理成功验证
+    wx.ready(function () {
+      // config信息验证后会执行ready方法，所有接口调用都必须在config接口获得结果之后，config是一个客户端的异步操作，所以如果需要在页面加载时就调用相关接口，则须把相关接口放在ready函数中调用来确保正确执行。对于用户触发时才调用的接口，则可以直接调用，不需要放在ready函数中。
+      // 验证接口是否有权限
+      wx.checkJsApi({
+        jsApiList: ['onMenuShareWeibo', 'startRecord', 'stopRecord', 'translateVoice','updateTimelineShareData','updateAppMessageShareData'], // 需要检测的JS接口列表，所有JS接口列表见附录2,
+        success: function (res) {
+          // 以键值对的形式返回，可用的api值true，不可用为false
+          // 如：{"checkResult":{"chooseImage":true},"errMsg":"checkJsApi:ok"}
+          console.log('允许使用' + res);
+        },
+        fail: function (err) {
+          // 接口调用失败时执行的回调函数
+          console.log('接口调用失败' + err);
+        }
+      });
+      // 设置标志位
+      var isRecord = false
+      // 语音识别
+      $('#search').tap(function () {
+        if (!isRecord) {
+          // 开始录音
+          wx.startRecord()
+          isRecord = true
+        } else {
+          // 结束录音
+          wx.stopRecord({
+            success: function (res) {
+              // 结束录音后,自动上传录音到微信服务器中,微信服务器会返回一个id给开发者使用
+              var localId = res.localId
+              // 将录音后转化为文字
+              // wx.translateVoice({
+              //   localId: localId, // 需要识别的音频的本地Id，由录音相关接口获得
+              //   isShowProgressTips: 1, // 默认为1，显示进度提示
+              //   success: function (res) {
+              //     alert(res.translateResult); // 语音识别的结果
+              //   }
+              // })
+
+              // 模拟结果 --- 西红柿首付
+              // 去豆瓣请求相应的数据
+              // http://api.douban.com/v2/movie/search?q=
+              var url = 'http://api.douban.com/v2/movie/search?callback=?&q=教父'
+              $.getJSON(url, function (data) {
+                // alert(data)
+                var { subjects } = data
+                var html = ''
+                subjects.forEach(function (item) {
+                  html += '<h2>' + item.title + '</h2><p>评分：' + item.rating.average + '</p><div><img src="' + item.images.small + '" alt="' + item.title + '"></div><a href="' + item.alt + '">' + item.title + '</a>'
+                })
+                $('#list').html(html)
+              })
+
+              isRecord = false
+            }
+          })
+        }
+      })
+
+      // 自定义“分享到朋友圈”及“分享到QQ空间”按钮的分享内容
+      // wx.updateTimelineShareData({
+      //   title: '', // 分享标题
+      //   link: '', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+      //   imgUrl: '', // 分享图标
+      //   success: function () {
+      //     // 设置成功
+      //   }
+      // })
+
+      // 自定义“分享给朋友”及“分享到QQ”按钮的分享内容（1.4.0）
+      // wx.updateAppMessageShareData({
+      //   title: '', // 分享标题
+      //   desc: '', // 分享描述
+      //   link: '', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+      //   imgUrl: '', // 分享图标
+      //   success: function () {
+      //     // 设置成功
+      //   }
+      // })
+    });
+
+    // 通过error接口处理失败验证
+    wx.error(function (res) {
+      // config信息验证失败会执行error函数，如签名过期导致验证失败，具体错误信息可以打开config的debug模式查看，也可以在返回的res参数中查看，对于SPA可以在这里更新签名。
+      console.log(res);
+    });
+
+  </script>
+</body>
+
+</html>
